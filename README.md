@@ -1,8 +1,7 @@
-# UNISDR Project - Multilabel Classification
+# UNISDR Text Classification - Training Flask API
 
 ## Description
-
-This repository contains UNISDR machine learning project code used within the Emerging Technologies Team. This project attempts to improve the efficiency of classifying articles on UNISDR website for Office for Disaster Risk Reduction. This part of code is mainly to retrain the models when recieving the new datasets.
+This reporsitory contains the Flask Api to retrain text classification project's models, including vectorizar, dimension reductor, normalizar and prediction models  for unisdr (UN Office of Disaster Risk Reduction). This project attempts to improve the efficiency of classifying articles on UNISDR website for Office for Disaster Risk Reduction. This project's main objective is to build a Web Prevention Tool for UNISDR.  
 
 Currently the main focus is to allow:  
 
@@ -43,7 +42,7 @@ The following list details project dependencies:
 * Clone the repository into your machine;
 * Install all the above dependencies with correct Python version;
 * Create "models" and "vector_models", "normalizar_models"  and "dim_reductor_models" folder in both ./unisdr/hazard and /unisdr/theme path and the models will automatically saved into these folder.
-* Run training_container.py to get the text classification output;
+* Run run.py in API folder to get the text classification output;
 
 ## Documentation
 
