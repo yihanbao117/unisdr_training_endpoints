@@ -7,24 +7,28 @@
     Contains functions that focus on cleaning data
 """
 
+__author__ = "Yihan Bao"
+__copyright__ = "Copyright 2019, United Nations OICT PSGD ETT"
+__credits__ = ["Kevin Bradley", "Yihan Bao", "Praneeth Nooli"]
+__date__ = "27 February 2019"
+__version__ = "0.1"
+__maintainer__ = "Yihan Bao"
+__email__ = "yihan.bao@un.org"
+__status__ = "Development"
 
-import enchant                                                      # Package used to detect English words
-import nltk                                                         # Package used to do text analysis 
-import re                                                           # Package used to as replace function
-import logging                                                      # Package used to handling errors
-import pandas as pd                                                 # Package used to operate dataframe
-from nltk.corpus import stopwords                                   # Corpus used to remove English stopwords
+import enchant  # Package used to detect English words
+import nltk  # Package used to do text analysis 
+import re  # Package used to as replace function
+import logging  # Package used to handling errors
+import pandas as pd  # Package used to operate dataframe
+from nltk.corpus import stopwords  # Corpus used to remove English stopwords
 #nltk.data.path.append("/Users/kevin/Desktop/unisdr/nltk_data")
 
 # Wrapper Class
 class Cleanser:
 
-    """
-    def clean_dataframe_by_regex(dataFrame, regex):
-        cleansed_data = dataFrame.str.replace(regex,'')  # Can only use .str accessor with string values, which use np.object_ dtype in pands
-        return cleansed_data
-    """
-    ## TODO some form of verification to check parameters are not null or empty-DONE
+
+    ##
     # This function is used to remove certain characters
     # from the DataFrame by using regular expressions
     # @param dataFrame DataFrame to be cleansed
@@ -41,8 +45,7 @@ class Cleanser:
         except Exception:
             logging.error("Exception occurred",exc_info=True)
     
-
-    ## TODO some form of verification to check parameters are not null or empty-DONE
+    ## 
     # This function is used to remove non specific ISO words
     # from the DataFrame. For example non American English words
     # @param dataFrame DataFrame to be cleansed
@@ -60,7 +63,7 @@ class Cleanser:
         except Exception:
             logging.error("Exception occurred",exc_info=True)
     
-    ## TODO some form of verification to check parameters are not null or empty-DONE
+    ##
     # This function is used to remove language specific stopwords
     # from the DataFrame. For example the English word 'the'
     # @param dataFrame DataFrame to be cleansed

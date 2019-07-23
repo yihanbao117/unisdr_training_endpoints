@@ -7,15 +7,23 @@
     Contains general helper based functions classes such as Enums and Exceptions
 """
 
+__author__ = "Yihan Bao"
+__copyright__ = "Copyright 2019, United Nations OICT PSGD ETT"
+__credits__ = ["Kevin Bradley", "Yihan Bao", "Praneeth Nooli"]
+__date__ = "27 February 2019"
+__version__ = "0.1"
+__maintainer__ = "Yihan Bao"
+__email__ = "yihan.bao@un.org"
+__status__ = "Development"
 
-import pandas as pd             # DataFrame management
-import logging                  # Error Handling
-import numpy as np              # Mathematical calcs
-import pickle                   # Used for loading models
-import sklearn                  # Used for model generation via pickle
-from enum import Enum           # Used for custom Enums
+import pandas as pd  # DataFrame management
+import logging  # Error Handling
+import numpy as np  # Mathematical calcs
+import pickle  # Used for loading models
+import sklearn  # Used for model generation via pickle
+from enum import Enum  # Used for custom Enums
 from constants import Encoding  # Used to identify character encoding
-import os 
+import os # Pakcage used for reading and writing files
 
 # Base Error class
 class Error(Exception):
@@ -30,7 +38,7 @@ class InvalidLabelsToModelsError(Error):
 # Wrapper Class 
 class Helper:
 
-    ## TODO some form of verification to check filename is not null or empty-DONE
+    ## 
     # This function is used to load a CSV file based on the 
     # filename and return this output.
     # @param filename The source file, as an string.
@@ -46,7 +54,7 @@ class Helper:
         except Exception:
             logging.error("Exception occurred", exc_info=True)
 
-    ## TODO some form of verification to check filename is not null or empty-DONE
+    ## 
     # This function is used to load a json file based on the 
     # filename and return this output.
     # @param filename The source file, as an string.
@@ -62,7 +70,7 @@ class Helper:
         except Exception:
             logging.error("Exception occurred", exc_info=True)
     
-    ## TODO some form of verification to check filename is not null or empty-DONE
+    ## 
     # This function is used to load a Model based on the 
     # filename and return this object.
     # @param filename The source file, as an string.
@@ -87,7 +95,7 @@ class Helper:
         except Exception:
             logging.error("Exception occurred", exc_info=True)
     
-    ## TODO some form of verification to check filename and delChar is not null or empty-DONE
+    ##
     # This function is used to load data based on the delimiter
     # @param filename String file path
     # @param delChar Character delimiter
@@ -102,7 +110,7 @@ class Helper:
         except Exception:
             logging.error("Exception occurred", exc_info=True)
     
-    ## TODO some form of verification to check parameters is not null or empty-DONE
+    ##
     # This function is used to create an empty DataFrame matching
     # the dimensions of the data expected to populate it
     # @param dataFrame DataFrame initial dataFrame
@@ -119,7 +127,7 @@ class Helper:
             else:
                 logging.error("Exception occurred:",exc_info=True)
     
-    ## TODO some form of verification to check parameters is not null or empty-DONE
+    ## 
     # Method used to create a DataFrame with the column names specified
     # @param dataFrame DataFrame of strings for each part of the path
     # @param colnames Tuple of strings with the column names
@@ -135,7 +143,7 @@ class Helper:
             else:
                 logging.error("Exception occurred:",exc_info=True)
 
-    ## TODO some form of verification to check parts size > 1-Done
+    ##
     # Method used to build a dynamic filepath
     # @param parts List of strings for each part of the path  
     # @returns String which is the combined file path
@@ -163,7 +171,7 @@ class Helper:
             else:
                 logging.error("Exception occurred:",exc_info=True)
 
-    ## TODO some form of verification to check parameters are not null or empty-DONE
+    ## 
     # This function simply concatinates columns 
     # @param colnames Tuple of column names as Strings
     # @param data DataFrame of the original data to subset and concat

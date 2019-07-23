@@ -7,24 +7,31 @@
     Contains methods that are used to transform data in some way
 """
 
+__author__ = "Yihan Bao"
+__copyright__ = "Copyright 2019, United Nations OICT PSGD ETT"
+__credits__ = ["Kevin Bradley", "Yihan Bao", "Praneeth Nooli"]
+__date__ = "27 February 2019"
+__version__ = "0.1"
+__maintainer__ = "Yihan Bao"
+__email__ = "yihan.bao@un.org"
+__status__ = "Development"
 
-import nltk                                   # Package used to do text analysis 
-import logging                                # Package used to handling errors
-import pandas as pd                           # Operation dataframe
-from constants import JobType                 # Enum for job type
-from helper import Helper as ett_h            # Core package of ETT 
-from textblob import Word                     # Package used to do lemmatization
+import nltk  # Package used to do text analysis 
+import logging  # Package used to handling errors
+import pandas as pd  # Operation dataframe
+from constants import JobType  # Enum for job type
+from helper import Helper as ett_h  # Core package of ETT 
+from textblob import Word  # Package used to do lemmatization
 #nltk.data.path.append("/Users/kevin/Desktop/unisdr/nltk_data")
 #from pathos.multiprocessing import ProcessingPool as Pool 
-from multiprocessing import Pool              # Package used for multiprocessing
-from nltk import WordNetLemmatizer            # Text data normalization-lemmatization
-from nltk.stem import PorterStemmer           # Text data normalization-stemming
-from sklearn import preprocessing             # Use for normalize the datasets to [0,1]
-from sklearn.preprocessing import MultiLabelBinarizer 
+from multiprocessing import Pool  # Package used for multiprocessing
+from nltk import WordNetLemmatizer  # Text data normalization-lemmatization
+from nltk.stem import PorterStemmer  # Text data normalization-stemming
+from sklearn import preprocessing  # Use for normalize the datasets to [0,1]
+from sklearn.preprocessing import MultiLabelBinarizer # User for one hot encoding labels
 
 class Transformer:
 
-    # concatinate_data_columns move TO HELPER 
 
     ## 
     # This function simply transforms text to lowercase           
@@ -122,7 +129,6 @@ class Transformer:
     # Method used to transform the input data to a dataframe
     # @param input_data DataFrame the initial data loaded into the app 
     # @returns DataFrame
-   
     # If want to call the functions within the same class, need ad another argument: self
     # But then this self argumnet will be used by other function(which will cause unnecessary)
     # So moving the string_to_dataframe and concatinate_data_columns to another file(helper.py)
@@ -173,3 +179,12 @@ class Transformer:
         label_array = label_encode.fit_transform(label_list)
         encoded_label = pd.DataFrame(label_array)
         return encoded_label
+    
+    ##
+    # Method used to transfer bytes data type to string
+    # @para data Any type of data
+    # @returns String type of data
+    @staticmethod
+    def bytes_to_str(data):
+        data = str(data, "utf-8")
+        return data
