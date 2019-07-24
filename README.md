@@ -42,7 +42,7 @@ The following list details project dependencies:
 * Clone the repository into your machine;
 * Install all the above dependencies with correct Python version;
 * Create "models" and "vector_models", "normalizar_models"  and "dim_reductor_models" folder in both ./unisdr/hazard and /unisdr/theme path and the models will automatically saved into these folder.
-* Run run.py in API folder to get the text classification output;
+* Run run.py in API folder  to get the text classification output;
 
 ## Documentation
 

@@ -75,6 +75,7 @@ class TrainHazard(Resource):
     
 
     def post(self):
+
         # Get the hazard labels
         abs_filename = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, label_file_name])
         labels = (ett_h.load_data_common_separated(abs_filename, ','))
@@ -97,8 +98,10 @@ class TrainHazard(Resource):
         data = le_transformed_data  # Return the newly transformed data
 
         # Split the data into 0.8 training datasets and 0.2 testing datasets
-        X_train, X_test, y_train, y_test = train_test_split(data, label_df, test_size=0.2)  
-        for i in range(num_of_labels):
+        X_train, X_test, y_train, y_test = train_test_split(data, label_df, test_size=0.2, random_state=42)  
+        best_score_list = [] 
+        #for i in range(num_of_labels):
+        for i in range(2):
             single_label = y_train.iloc[:,i]
             label = labels[i]
             print("label",label)
@@ -116,7 +119,7 @@ class TrainHazard(Resource):
             list_n =[100]
             # Remember to add[2,\]2]
             best_score = 0
-            epsilon = .005
+            epsilon = .05
             dictionary = {}
 
             for para_c in list_c:
@@ -125,7 +128,10 @@ class TrainHazard(Resource):
                                   'svd':[TruncatedSVD(n_components=para_n, n_iter=7, random_state=42)],
                                   'clf':[OneVsRestClassifier(SVC(kernel='linear', probability=True, C=para_c))]
                                  }
-                    gs_clf = GridSearchCV(pipeline, parameters, cv=5, error_score='raise', n_jobs = -1)
+                    
+                    #gs_clf = GridSearchCV(pipeline, parameters, cv=5, error_score='raise', n_jobs = -1)
+                    #gs_clf = GridSearchCV(pipeline, parameters, cv=2, error_score='raise', scoring="f1")
+                    gs_clf = GridSearchCV(pipeline, parameters, cv=5, error_score='raise', scoring="f1")
                     gs_clf = gs_clf.fit(X_train, single_label)
                     current_score = gs_clf.best_score_
                     dictionary[current_score] = parameters
@@ -133,7 +139,8 @@ class TrainHazard(Resource):
             for current_score in dictionary.keys():
                 if current_score - epsilon > best_score:
                     best_score = current_score
-                    print("this is best score",best_score)
+                best_score_list.append(best_score)
+           
 
             model_dict = dictionary[best_score]
             abs_filename_m = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, model_folder_name, label+model_name]) 
@@ -166,5 +173,6 @@ class TrainHazard(Resource):
             clf = model_dict['clf'][0].fit(scaled_df, y_res)
             clf.fit(scaled_df, y_res)
             ett_h.save_model(clf, abs_filename_m)
-            
-        return "Training finished"
+        
+        f1_score = json.dumps(best_score_list)
+        return f1_score

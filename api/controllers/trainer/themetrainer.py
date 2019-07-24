@@ -75,6 +75,7 @@ class TrainTheme(Resource):
     
 
     def post(self):
+
         # Get the THEME labels
         abs_filename = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, label_file_name])
         labels = (ett_h.load_data_common_separated(abs_filename, ','))
@@ -97,7 +98,8 @@ class TrainTheme(Resource):
         data = le_transformed_data  # Return the newly transformed data
 
         # Split the data into 0.8 training datasets and 0.2 testing datasets
-        X_train, X_test, y_train, y_test = train_test_split(data, label_df, test_size=0.2)  
+        X_train, X_test, y_train, y_test = train_test_split(data, label_df, test_size=0.2, random_state=42) 
+        best_score_list = [] 
         for i in range(num_of_labels):
             single_label = y_train.iloc[:,i]
             label = labels[i]
@@ -125,7 +127,7 @@ class TrainTheme(Resource):
                                   'svd':[TruncatedSVD(n_components=para_n, n_iter=7, random_state=42)],
                                   'clf':[OneVsRestClassifier(SVC(kernel='linear', probability=True, C=para_c))]
                                  }
-                    gs_clf = GridSearchCV(pipeline, parameters, cv=5, error_score='raise', n_jobs = -1)
+                    gs_clf = GridSearchCV(pipeline, parameters, cv=5, error_score='raise', scoring='f1')
                     gs_clf = gs_clf.fit(X_train, single_label)
                     current_score = gs_clf.best_score_
                     dictionary[current_score] = parameters
@@ -133,13 +135,13 @@ class TrainTheme(Resource):
             for current_score in dictionary.keys():
                 if current_score - epsilon > best_score:
                     best_score = current_score
-                    print("this is best score",best_score)
+                best_score_list.append(best_score)
 
             model_dict = dictionary[best_score]
-            abs_filename_m = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, model_folder_name, label + model_name]) 
-            abs_filename_v = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, vector_folder_name, label + vector_model_name]) 
-            abs_filename_r = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, dim_reductor_folder_name, label + dim_reductor_model_name]) 
-            abs_filename_n = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, normalizar_folder_name, label + normalizar_model_name]) 
+            abs_filename_m = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, model_folder_name, label+model_name]) 
+            abs_filename_v = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, vector_folder_name, label+vector_model_name]) 
+            abs_filename_r = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, dim_reductor_folder_name, label+dim_reductor_model_name]) 
+            abs_filename_n = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, normalizar_folder_name, label +normalizar_model_name]) 
             
             # Here to fit the training datasets to the  models with best score
             # vectorization
@@ -166,5 +168,6 @@ class TrainTheme(Resource):
             clf = model_dict['clf'][0].fit(scaled_df, y_res)
             clf.fit(scaled_df, y_res)
             ett_h.save_model(clf, abs_filename_m)
-            
+        
+        f1_score = json.dumps(best_score_list)   
         return "Training finished"
