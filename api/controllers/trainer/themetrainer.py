@@ -21,8 +21,16 @@ __status__ = "Development"
 import os  # Package used for accessing files
 import time  # Calculcate time differences
 import pandas as pd  # Dataframe operations
+import time # Package for system time
 import sys  # Pakcage for system operations
 import json  # Package for josn file operation
+"""
+# Connection to AWS   
+import os 
+import boto
+import boto.s3.connection
+from boto.s3.key import Key
+"""
 sys.path.append('../ett/')  # Natigate to ett folder path
 from helper import Helper as ett_h  # ETT Helper methods
 from run import app  # From run.py import application
@@ -138,17 +146,37 @@ class TrainTheme(Resource):
                 best_score_list.append(best_score)
 
             model_dict = dictionary[best_score]
-            abs_filename_m = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, model_folder_name, label+model_name]) 
-            abs_filename_v = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, vector_folder_name, label+vector_model_name]) 
-            abs_filename_r = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, dim_reductor_folder_name, label+dim_reductor_model_name]) 
-            abs_filename_n = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, normalizar_folder_name, label +normalizar_model_name]) 
-            
+         
+            timestamp = time.strftime("%Y%m%d_%H%M%S_")
+
+            abs_filename_m = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, model_folder_name, timestamp+label+model_name]) 
+            abs_filename_v = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, vector_folder_name, timestamp+label+vector_model_name]) 
+            abs_filename_r = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, dim_reductor_folder_name, timestamp+label+dim_reductor_model_name]) 
+            abs_filename_n = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, normalizar_folder_name, timestamp+label+normalizar_model_name]) 
+           
+            """
+            # Connect to AWS
+            conn = boto.s3.connect_to_region(" ",aws_access_key_id = 'AWS-Access-Key', aws_secret_access_key = 'AWS-Secrete-Key',
+                                 calling_format = boto.s3.connection.OrdinaryCallingFormat())
+
+            bucket = conn.get_bucket("oict-psdg-unisdr-train-models-v1")
+        
+            # AWS Key 
+            aws_path = ett_h.generate_dynamic_path([LabelType.THEME.value, label, timestamp+label])
+            """
             # Here to fit the training datasets to the  models with best score
             # vectorization
             vector = model_dict['tfidf'][0].fit(X_train, single_label)
             ett_h.save_model(vector, abs_filename_v)
             vectorized_df = vector.transform(X_train)
-        
+            """
+            key_name = timestamp+label+model_name
+            full_key_name = os.path.join(path, key_name)
+            
+            pickle_byte_obj = pickle.dump(vector) 
+            s3_resource = resource('s3')
+            s3_resource.Object(bucket,full_key_name).put(Body=pickle_byte_obj)
+            """
             # Balcancing
             sm = SMOTE(random_state=42)
             X_res, y_res = sm.fit_resample(vectorized_df, single_label)
@@ -158,16 +186,42 @@ class TrainTheme(Resource):
             ett_h.save_model(svd, abs_filename_r)
             dim_reductor_df = svd.transform(X_res)
             
+            """
+            key_name = timestamp+label+dim_reductor_model_name
+            full_key_name = os.path.join(path, key_name)
+            
+            pickle_byte_obj = pickle.dump(svd) 
+            s3_resource = resource('s3')
+            s3_resource.Object(bucket,full_key_name).put(Body=pickle_byte_obj)
+            """
+
             # Normalizing
             min_max_scaler = preprocessing.MinMaxScaler()
             nor_model = min_max_scaler.fit(dim_reductor_df, y_res)
             ett_h.save_model(nor_model, abs_filename_n)
             scaled_df = nor_model.transform(dim_reductor_df)
             
+            """
+            key_name = timestamp+label+normalizar_model_name
+            full_key_name = os.path.join(path, key_name)
+            
+            pickle_byte_obj = pickle.dump(nor_model) 
+            s3_resource = resource('s3')
+            s3_resource.Object(bucket,full_key_name).put(Body=pickle_byte_obj)
+            """
+
             # Classifier
             clf = model_dict['clf'][0].fit(scaled_df, y_res)
             clf.fit(scaled_df, y_res)
             ett_h.save_model(clf, abs_filename_m)
-        
+
+            """
+            key_name = timestamp+label+model_name
+            full_key_name = os.path.join(path, key_name)
+            
+            pickle_byte_obj = pickle.dump(scaled_df) 
+            s3_resource = resource('s3')
+            s3_resource.Object(bucket,full_key_name).put(Body=pickle_byte_obj)
+            """
         f1_score = json.dumps(best_score_list)   
         return "Training finished"

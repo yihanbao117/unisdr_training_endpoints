@@ -23,6 +23,15 @@ import time  # Calculcate time differences
 import pandas as pd  # Dataframe operations
 import sys  # Pakcage for system operations
 import json  # Package for josn file operation
+import time  # Package for system time
+
+"""
+# Connection to AWS   
+import os 
+import boto
+import boto.s3.connection
+from boto.s3.key import Key
+"""
 sys.path.append('../ett/')  # Natigate to ett folder path
 from helper import Helper as ett_h  # ETT Helper methods
 from run import app  # From run.py import application
@@ -45,6 +54,7 @@ from flask import request  # Flask methods for requesting binary input file
 from flask_restful import Resource  # Flask restful for create endpoints
 
 base_folder_location = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))))
+
 label_file_name = 'labels.txt'
 data_file_name = 'data.json'
 
@@ -99,9 +109,10 @@ class TrainHazard(Resource):
 
         # Split the data into 0.8 training datasets and 0.2 testing datasets
         X_train, X_test, y_train, y_test = train_test_split(data, label_df, test_size=0.2, random_state=42)  
-        best_score_list = [] 
+        endpoint_output = {}
         #for i in range(num_of_labels):
         for i in range(2):
+            model_id = str(i)
             single_label = y_train.iloc[:,i]
             label = labels[i]
             print("label",label)
@@ -128,7 +139,6 @@ class TrainHazard(Resource):
                                   'svd':[TruncatedSVD(n_components=para_n, n_iter=7, random_state=42)],
                                   'clf':[OneVsRestClassifier(SVC(kernel='linear', probability=True, C=para_c))]
                                  }
-                    
                     #gs_clf = GridSearchCV(pipeline, parameters, cv=5, error_score='raise', n_jobs = -1)
                     #gs_clf = GridSearchCV(pipeline, parameters, cv=2, error_score='raise', scoring="f1")
                     gs_clf = GridSearchCV(pipeline, parameters, cv=5, error_score='raise', scoring="f1")
@@ -139,40 +149,104 @@ class TrainHazard(Resource):
             for current_score in dictionary.keys():
                 if current_score - epsilon > best_score:
                     best_score = current_score
-                best_score_list.append(best_score)
+                #best_score_list.append(best_score)
+            
+            model_dict = dictionary[best_score]
+
+            label_model_list = {}
+            label_model_list['score'] = best_score
            
 
-            model_dict = dictionary[best_score]
-            abs_filename_m = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, model_folder_name, label+model_name]) 
-            abs_filename_v = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, vector_folder_name, label+vector_model_name]) 
-            abs_filename_r = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, dim_reductor_folder_name, label+dim_reductor_model_name]) 
-            abs_filename_n = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, normalizar_folder_name, label+normalizar_model_name]) 
-            
+            """
+            abs_filename_m = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, model_folder_name, timestamp+label+model_name]) 
+            abs_filename_v = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, vector_folder_name, timestamp+label+vector_model_name]) 
+            abs_filename_r = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, dim_reductor_folder_name, timestamp+label+dim_reductor_model_name]) 
+            abs_filename_n = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, normalizar_folder_name, timestamp+label+normalizar_model_name]) 
+            """
+
+            folder_time = time.strftime("_%Y%m%d_%H%M")
+            # Create Directory in the AWS S3 Bucket
+            os.mkdir("/Users/yihanbao/Desktop/unisdr-training/hazard/"+label+"/"+ label+folder_time)
+            # Navigate to AWS model saving folder
+            model_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))), ett_h.generate_dynamic_path([LabelType.HAZARD.value, label, label+folder_time]))
+            print("model_folder", model_folder)  
+
+            """
+            # Connect to AWS
+            conn = boto.s3.connect_to_region(" ", aws_access_key_id = 'AWS-Access-Key', aws_secret_access_key = 'AWS-Secrete-Key',
+                                 calling_format = boto.s3.connection.OrdinaryCallingFormat())
+
+            bucket = conn.get_bucket("oict-psdg-unisdr-train-models-v1")
+
+            # AWS Key 
+            aws_path = ett_h.generate_dynamic_path([LabelType.HAZARD.value, label, timestamp+label])
+        
+            """
             # Here to fit the training datasets to the  models with best score
             # vectorization
             vector = model_dict['tfidf'][0].fit(X_train, single_label)
-            ett_h.save_model(vector, abs_filename_v)
-            vectorized_df = vector.transform(X_train)
-        
+            ett_h.save_model(vector, ett_h.generate_dynamic_path([model_folder, label+folder_time+vector_model_name]))
+            print("vector model path", ett_h.generate_dynamic_path([model_folder, label+folder_time+vector_model_name]))
+            vectorized_df = vector.transform(X_train)      
+            label_model_list['vec_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+vector_model_name])
+            """
+            key_name = timestamp+label+model_name
+            full_key_name = os.path.join(path, key_name)
+            
+            pickle_byte_obj = pickle.dump(vector) 
+            s3_resource = resource('s3')
+            s3_resource.Object(bucket,full_key_name).put(Body=pickle_byte_obj)
+            """
             # Balcancing
             sm = SMOTE(random_state=42)
             X_res, y_res = sm.fit_resample(vectorized_df, single_label)
             
             # Feature selction
             svd = model_dict['svd'][0].fit(X_res,y_res)
-            ett_h.save_model(svd, abs_filename_r)
-            dim_reductor_df = svd.transform(X_res)
+            ett_h.save_model(svd, ett_h.generate_dynamic_path([model_folder, label+folder_time+dim_reductor_model_name]))
+            dim_reductor_df = svd.transform(X_res) 
+            label_model_list['dim_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+dim_reductor_model_name])
+
+            """
+            key_name = timestamp+label+dim_reductor_model_name
+            full_key_name = os.path.join(path, key_name)
             
+            pickle_byte_obj = pickle.dump(svd) 
+            s3_resource = resource('s3')
+            s3_resource.Object(bucket,full_key_name).put(Body=pickle_byte_obj)
+            """
+
             # Normalizing
             min_max_scaler = preprocessing.MinMaxScaler()
             nor_model = min_max_scaler.fit(dim_reductor_df, y_res)
-            ett_h.save_model(nor_model, abs_filename_n)
+            ett_h.save_model(nor_model, ett_h.generate_dynamic_path([model_folder, label+folder_time+normalizar_model_name]))
             scaled_df = nor_model.transform(dim_reductor_df)
+            label_model_list['nor_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+normalizar_model_name])
+            
+            """
+            key_name = timestamp+label+normalizar_model_name
+            full_key_name = os.path.join(path, key_name)
+            
+            pickle_byte_obj = pickle.dump(nor_model) 
+            s3_resource = resource('s3')
+            s3_resource.Object(bucket,full_key_name).put(Body=pickle_byte_obj)
+            """
             
             # Classifier
             clf = model_dict['clf'][0].fit(scaled_df, y_res)
             clf.fit(scaled_df, y_res)
-            ett_h.save_model(clf, abs_filename_m)
-        
-        f1_score = json.dumps(best_score_list)
-        return f1_score
+            ett_h.save_model(clf, ett_h.generate_dynamic_path([model_folder, label+folder_time+model_name]))
+            label_model_list['mod_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+model_name])
+
+            """
+            key_name = timestamp+label+model_name
+            full_key_name = os.path.join(path, key_name)
+            
+            pickle_byte_obj = pickle.dump(scaled_df) 
+            s3_resource = resource('s3')
+            s3_resource.Object(bucket,full_key_name).put(Body=pickle_byte_obj)
+            """
+            endpoint_output[model_id] = [label_model_list]
+        output = json.dumps(endpoint_output)
+        return output
+
