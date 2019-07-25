@@ -107,8 +107,9 @@ class TrainTheme(Resource):
 
         # Split the data into 0.8 training datasets and 0.2 testing datasets
         X_train, X_test, y_train, y_test = train_test_split(data, label_df, test_size=0.2, random_state=42) 
-        best_score_list = [] 
+        endpoint_output = {}
         for i in range(num_of_labels):
+            model_id = str(i)
             single_label = y_train.iloc[:,i]
             label = labels[i]
             print("label",label)
@@ -143,17 +144,19 @@ class TrainTheme(Resource):
             for current_score in dictionary.keys():
                 if current_score - epsilon > best_score:
                     best_score = current_score
-                best_score_list.append(best_score)
 
             model_dict = dictionary[best_score]
-         
-            timestamp = time.strftime("%Y%m%d_%H%M%S_")
 
-            abs_filename_m = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, model_folder_name, timestamp+label+model_name]) 
-            abs_filename_v = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, vector_folder_name, timestamp+label+vector_model_name]) 
-            abs_filename_r = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, dim_reductor_folder_name, timestamp+label+dim_reductor_model_name]) 
-            abs_filename_n = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, normalizar_folder_name, timestamp+label+normalizar_model_name]) 
-           
+            label_model_list = {}
+            label_model_list['score'] = best_score
+
+            folder_time = time.strftime("_%Y%m%d_%H%M")
+            # Create Directory in the AWS S3 Bucket
+            os.mkdir("/Users/yihanbao/Desktop/unisdr-training/theme/"+label+"/"+ label+folder_time)
+            # Navigate to AWS model saving folder
+            model_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))), ett_h.generate_dynamic_path([LabelType.THEME.value, label, label+folder_time]))
+            print("model_folder", model_folder) 
+
             """
             # Connect to AWS
             conn = boto.s3.connect_to_region(" ",aws_access_key_id = 'AWS-Access-Key', aws_secret_access_key = 'AWS-Secrete-Key',
@@ -167,8 +170,11 @@ class TrainTheme(Resource):
             # Here to fit the training datasets to the  models with best score
             # vectorization
             vector = model_dict['tfidf'][0].fit(X_train, single_label)
-            ett_h.save_model(vector, abs_filename_v)
-            vectorized_df = vector.transform(X_train)
+            ett_h.save_model(vector, ett_h.generate_dynamic_path([model_folder, label+folder_time+vector_model_name]))
+            print("vector model path", ett_h.generate_dynamic_path([model_folder, label+folder_time+vector_model_name]))
+            vectorized_df = vector.transform(X_train)      
+            label_model_list['vec_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+vector_model_name])
+            
             """
             key_name = timestamp+label+model_name
             full_key_name = os.path.join(path, key_name)
@@ -183,8 +189,9 @@ class TrainTheme(Resource):
             
             # Feature selction
             svd = model_dict['svd'][0].fit(X_res,y_res)
-            ett_h.save_model(svd, abs_filename_r)
-            dim_reductor_df = svd.transform(X_res)
+            ett_h.save_model(svd, ett_h.generate_dynamic_path([model_folder, label+folder_time+dim_reductor_model_name]))
+            dim_reductor_df = svd.transform(X_res) 
+            label_model_list['dim_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+dim_reductor_model_name])
             
             """
             key_name = timestamp+label+dim_reductor_model_name
@@ -198,8 +205,9 @@ class TrainTheme(Resource):
             # Normalizing
             min_max_scaler = preprocessing.MinMaxScaler()
             nor_model = min_max_scaler.fit(dim_reductor_df, y_res)
-            ett_h.save_model(nor_model, abs_filename_n)
+            ett_h.save_model(nor_model, ett_h.generate_dynamic_path([model_folder, label+folder_time+normalizar_model_name]))
             scaled_df = nor_model.transform(dim_reductor_df)
+            label_model_list['nor_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+normalizar_model_name])
             
             """
             key_name = timestamp+label+normalizar_model_name
@@ -213,7 +221,8 @@ class TrainTheme(Resource):
             # Classifier
             clf = model_dict['clf'][0].fit(scaled_df, y_res)
             clf.fit(scaled_df, y_res)
-            ett_h.save_model(clf, abs_filename_m)
+            ett_h.save_model(clf, ett_h.generate_dynamic_path([model_folder, label+folder_time+model_name]))
+            label_model_list['mod_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+model_name])
 
             """
             key_name = timestamp+label+model_name
@@ -223,5 +232,6 @@ class TrainTheme(Resource):
             s3_resource = resource('s3')
             s3_resource.Object(bucket,full_key_name).put(Body=pickle_byte_obj)
             """
-        f1_score = json.dumps(best_score_list)   
-        return "Training finished"
+            endpoint_output[model_id] = [label_model_list]
+        output = json.dumps(endpoint_output)
+        return output

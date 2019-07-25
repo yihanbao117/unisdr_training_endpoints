@@ -149,20 +149,11 @@ class TrainHazard(Resource):
             for current_score in dictionary.keys():
                 if current_score - epsilon > best_score:
                     best_score = current_score
-                #best_score_list.append(best_score)
             
             model_dict = dictionary[best_score]
 
             label_model_list = {}
             label_model_list['score'] = best_score
-           
-
-            """
-            abs_filename_m = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, model_folder_name, timestamp+label+model_name]) 
-            abs_filename_v = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, vector_folder_name, timestamp+label+vector_model_name]) 
-            abs_filename_r = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, dim_reductor_folder_name, timestamp+label+dim_reductor_model_name]) 
-            abs_filename_n = ett_h.generate_dynamic_path([base_folder_location, LabelType.HAZARD.value, normalizar_folder_name, timestamp+label+normalizar_model_name]) 
-            """
 
             folder_time = time.strftime("_%Y%m%d_%H%M")
             # Create Directory in the AWS S3 Bucket

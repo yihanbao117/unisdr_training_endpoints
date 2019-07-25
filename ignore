@@ -1,18 +1,13 @@
-hazard/models
-hazard/dim_reductor_models
-hazard/normalizar_models
-hazard/vector_models
-
-
-theme/models
-theme/vector_models
-theme/dim_reductor_models
-theme/normalizar_models
 
 __pycache__
+
 ett/__pycache__
 api/__pycache__
+
 api/controllers/trainer/__pycache__/hazardtrainer.cpython-37.pyc
 api/controllers/trainer/__pycache__/themetrainer.cpython-37.pyc
 
 api/myLogs.log
+
+hazard/
+theme/

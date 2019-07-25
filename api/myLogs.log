@@ -1,3 +1,2 @@
-2019-07-25 15:40:32,439 - INFO -  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
-2019-07-25 15:40:35,509 - INFO - 127.0.0.1 - - [25/Jul/2019 15:40:35] "[37mPOST /training/hazard/data HTTP/1.1[0m" 200 -
-2019-07-25 15:42:54,849 - INFO - 127.0.0.1 - - [25/Jul/2019 15:42:54] "[37mPOST /train/hazard HTTP/1.1[0m" 200 -
+2019-07-25 17:34:04,038 - INFO -  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+2019-07-25 17:34:06,169 - INFO - 127.0.0.1 - - [25/Jul/2019 17:34:06] "[37mPOST /training/theme/data HTTP/1.1[0m" 200 -
