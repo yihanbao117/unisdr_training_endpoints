@@ -27,11 +27,15 @@ import os # Pakcage used for reading and writing files
 
 # Base Error class
 class Error(Exception):
+
+
     """ETT Base class for other custom exceptions"""
     pass
 
 # Custom Error Class
 class InvalidLabelsToModelsError(Error):
+
+
    """The number of labels does not match the number of expected corresponding models"""
    pass
 
@@ -47,6 +51,7 @@ class Helper:
     # @see Exception
     @staticmethod
     def load_csv(filename):
+
         try:
             return pd.read_csv(filename, encoding=Encoding.LATIN_1.value)
         except OSError:
@@ -63,6 +68,7 @@ class Helper:
     # @see Exception
     @staticmethod
     def load_json(filename):
+
         try:
             return pd.read_json(filename)
         except OSError:
@@ -77,6 +83,7 @@ class Helper:
     # @return An Object which is the model.
     @staticmethod
     def load_model(filename):
+
         try:
             with open(filename, 'rb') as model_file:
                 return pickle.load(model_file)
@@ -88,6 +95,7 @@ class Helper:
     #0419
     @staticmethod
     def save_model(model_name,filename):
+
         try:
             return pickle.dump(model_name,open(os.path.expanduser(filename),'wb'))
         except OSError:
@@ -102,6 +110,7 @@ class Helper:
     # @returns Tuple of values
     @staticmethod # Change the function  #  The outpurt is one list
     def load_data_common_separated(filename,delChar):
+
         try: 
             text_file = open(filename,'r')
             return text_file.read().split(delChar)
@@ -118,6 +127,7 @@ class Helper:
     # @returns DataFrame with the correct dimensions 
     @staticmethod
     def provision_data_frame(dataFrame,num):
+
         try:
             provisioned_data = pd.DataFrame(np.zeros((len(dataFrame), num)))
             return provisioned_data
@@ -134,6 +144,7 @@ class Helper:
     # @returns DataFrame with the columns provisioned
     @staticmethod
     def provision_named_data_frame(dataFrame,colnames):
+
         try:
             provisioned_named_data = pd.DataFrame(dataFrame, columns=colnames)
             return provisioned_named_data
@@ -149,6 +160,7 @@ class Helper:
     # @returns String which is the combined file path
     @staticmethod
     def generate_dynamic_path(parts):
+
         try:
             if len(parts) > 1:
                 return '/'.join(parts)
@@ -162,6 +174,7 @@ class Helper:
     # @returns A dataframe with column name
     @staticmethod
     def string_to_dataframe(input_data,list_colname):
+
         try:
             input_data = pd.DataFrame(input_data,columns=list_colname)
             return input_data
@@ -178,6 +191,7 @@ class Helper:
     # @returns concat_cols DataFrame of concatinated columns imto a single columne
     @staticmethod
     def concatinate_data_columns(colnames,data):
+        
         try:
             concat_cols = data[colnames].apply(lambda x: ''.join(x), axis=1)
             return concat_cols
