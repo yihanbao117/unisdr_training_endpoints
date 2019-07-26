@@ -40,5 +40,7 @@ from controllers.trainer import hazardtrainer
 from controllers.trainer import themetrainer
 
 # Add a resource to the api
+api.add_resource(hazardtrainer.TrainHazardUpload, '/training/hazard/data')
+api.add_resource(themetrainer.TrainThemeUpload, '/training/theme/data')
 api.add_resource(hazardtrainer.TrainHazard, '/train/hazard')
 api.add_resource(themetrainer.TrainTheme, '/train/theme')

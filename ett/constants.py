@@ -54,3 +54,36 @@ class LabelType(Enum):
 
     HAZARD = "hazard"
     THEME = "theme"
+
+
+class ColumnName(Enum):
+
+
+    TITLE = "title"
+    TEXTDATA = "textData"
+    LABEL = "label"
+    PROBABILITIES = "probabilities"
+    JOBID = "job_id"
+    TIME = "time"
+    UPDATED = "updated_labels"
+    PREDID = "prediction_id"
+    UPDATEDLABEL = "updated_labels"
+    RECORDID = "record_id"
+
+class ModelType(Enum):
+    
+    
+    TFIDF = "tfidf"
+    SVD = "svd"
+    CLF = "clf"
+    NOR = "nor"
+    SCORE = "score"
+    OVERSAMPLE = "oversample"
+
+class URLName(Enum):
+
+
+    VECURL = "vec_url"
+    DIMURL = "dim_url"
+    NORURL = "nor_url"
+    MODURL = "mod_url"

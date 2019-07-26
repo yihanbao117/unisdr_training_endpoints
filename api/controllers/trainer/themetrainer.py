@@ -37,9 +37,12 @@ from run import app  # From run.py import application
 from transformer import Transformer as ett_t  # ETT Transformer methods
 from constants import JobType  # Enum for job type
 from constants import RegexFilter  # Regex Filter Enums
-from constants import Language  # KV Language Enums 
+from constants import Language  # ETT Language Enums 
+from constants import URLName  # ETT constants for url name
+from constants import ColumnName # ETT constants for columns name
 from constants import LabelType  # ETT constants for label types
 from cleanser import Cleanser as ett_c # ETT cleanser package
+from constants import ModelType # ETT constants for Model types
 from sklearn.model_selection import train_test_split # Pakcage for data spitting 
 from sklearn.decomposition import TruncatedSVD  # Pakcage for feature engineering
 from sklearn import preprocessing  # Pakcage for preprocessing 
@@ -69,6 +72,7 @@ normalizar_model_name = '_normalizar.pickle'
 # Preprocessing variables
 colnames = ["title", "textData"]
 
+"""
 @app.route('/training/theme/data', methods=['POST'])
 def training_theme_data():
     
@@ -78,6 +82,22 @@ def training_theme_data():
     global input_data
     input_data = pd.DataFrame(bytes_data)
     return "Successfully uploading THEME data"
+"""
+
+class TrainThemeUpload(Resource):
+
+
+    def __init__(self):
+
+        TrainThemeUpload.input_data = " "
+    
+    def post(self):
+
+        bytes_data = request.stream.read()
+        bytes_data = ett_t.bytes_to_str(bytes_data)
+        bytes_data = json.loads(bytes_data) 
+        TrainThemeUpload.input_data = pd.DataFrame(bytes_data)
+        return "Successfully uploading Theme data"
 
 class TrainTheme(Resource):
     
@@ -88,8 +108,8 @@ class TrainTheme(Resource):
         abs_filename = ett_h.generate_dynamic_path([base_folder_location, LabelType.THEME.value, label_file_name])
         labels = (ett_h.load_data_common_separated(abs_filename, ','))
         # Get the label data from input_data
-        raw_label = input_data['label']
-        data = ett_t.transform_data_to_dataframe_basic(input_data, colnames)
+        raw_label = TrainThemeUpload.input_data[ColumnName.LABEL.value]
+        data = ett_t.transform_data_to_dataframe_basic(TrainThemeUpload.input_data, colnames)
         # Get the OneHotEncoded labels
         label_df = ett_t.one_hot_encoding(raw_label)  #17 labels dataframe
         # Rename the OneHotEncoded labels
@@ -114,11 +134,11 @@ class TrainTheme(Resource):
             label = labels[i]
             print("label",label)
             pipeline = imbPipeline([
-                            ('tfidf', TfidfVectorizer()),  # Data vectorization
-                            ('oversample', SMOTE(random_state=42)),  # Data balancing
-                            ('svd', TruncatedSVD()),  # Feature selection
-                            ('nor',preprocessing.MinMaxScaler()),  # Data normalization
-                            ('clf', OneVsRestClassifier(SVC()))])  # CLassification
+                            (ModelType.TFIDF.value, TfidfVectorizer()),  # Data vectorization
+                            (ModelType.OVERSAMPLE.value, SMOTE(random_state=42)),  # Data balancing
+                            (ModelType.SVD.value, TruncatedSVD()),  # Feature selection
+                            (ModelType.NOR.value,preprocessing.MinMaxScaler()),  # Data normalization
+                            (ModelType.CLF.value, OneVsRestClassifier(SVC()))])  # CLassification
 
             #list_c = [.1, .2, .3, .4, .5, .6, .7, .8, .9, 1]
             list_c = [1]
@@ -132,9 +152,9 @@ class TrainTheme(Resource):
 
             for para_c in list_c:
                 for para_n in list_n:
-                    parameters = {'tfidf':[TfidfVectorizer(max_features=800, ngram_range=(1,4), norm='l2', encoding='latin-1', stop_words='english', analyzer='word')],
-                                  'svd':[TruncatedSVD(n_components=para_n, n_iter=7, random_state=42)],
-                                  'clf':[OneVsRestClassifier(SVC(kernel='linear', probability=True, C=para_c))]
+                    parameters = {ModelType.TFIDF.value:[TfidfVectorizer(max_features=800, ngram_range=(1,4), norm='l2', encoding='latin-1', stop_words='english', analyzer='word')],
+                                  ModelType.SVD.value:[TruncatedSVD(n_components=para_n, n_iter=7, random_state=42)],
+                                  ModelType.CLF.value:[OneVsRestClassifier(SVC(kernel='linear', probability=True, C=para_c))]
                                  }
                     gs_clf = GridSearchCV(pipeline, parameters, cv=5, error_score='raise', scoring='f1')
                     gs_clf = gs_clf.fit(X_train, single_label)
@@ -155,7 +175,6 @@ class TrainTheme(Resource):
             os.mkdir("/Users/yihanbao/Desktop/unisdr-training/theme/"+label+"/"+ label+folder_time)
             # Navigate to AWS model saving folder
             model_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))), ett_h.generate_dynamic_path([LabelType.THEME.value, label, label+folder_time]))
-            print("model_folder", model_folder) 
 
             """
             # Connect to AWS
@@ -169,11 +188,10 @@ class TrainTheme(Resource):
             """
             # Here to fit the training datasets to the  models with best score
             # vectorization
-            vector = model_dict['tfidf'][0].fit(X_train, single_label)
+            vector = model_dict[ModelType.TFIDF.value][0].fit(X_train, single_label)
             ett_h.save_model(vector, ett_h.generate_dynamic_path([model_folder, label+folder_time+vector_model_name]))
-            print("vector model path", ett_h.generate_dynamic_path([model_folder, label+folder_time+vector_model_name]))
             vectorized_df = vector.transform(X_train)      
-            label_model_list['vec_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+vector_model_name])
+            label_model_list[URLName.VECURL.value] = ett_h.generate_dynamic_path([model_folder, label+folder_time+vector_model_name])
             
             """
             key_name = timestamp+label+model_name
@@ -188,10 +206,10 @@ class TrainTheme(Resource):
             X_res, y_res = sm.fit_resample(vectorized_df, single_label)
             
             # Feature selction
-            svd = model_dict['svd'][0].fit(X_res,y_res)
+            svd = model_dict[ModelType.SVD.value][0].fit(X_res,y_res)
             ett_h.save_model(svd, ett_h.generate_dynamic_path([model_folder, label+folder_time+dim_reductor_model_name]))
             dim_reductor_df = svd.transform(X_res) 
-            label_model_list['dim_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+dim_reductor_model_name])
+            label_model_list[URLName.DIMURL.value] = ett_h.generate_dynamic_path([model_folder, label+folder_time+dim_reductor_model_name])
             
             """
             key_name = timestamp+label+dim_reductor_model_name
@@ -207,7 +225,7 @@ class TrainTheme(Resource):
             nor_model = min_max_scaler.fit(dim_reductor_df, y_res)
             ett_h.save_model(nor_model, ett_h.generate_dynamic_path([model_folder, label+folder_time+normalizar_model_name]))
             scaled_df = nor_model.transform(dim_reductor_df)
-            label_model_list['nor_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+normalizar_model_name])
+            label_model_list[URLName.NORURL.value] = ett_h.generate_dynamic_path([model_folder, label+folder_time+normalizar_model_name])
             
             """
             key_name = timestamp+label+normalizar_model_name
@@ -219,10 +237,10 @@ class TrainTheme(Resource):
             """
 
             # Classifier
-            clf = model_dict['clf'][0].fit(scaled_df, y_res)
+            clf = model_dict[ModelType.CLF.value][0].fit(scaled_df, y_res)
             clf.fit(scaled_df, y_res)
             ett_h.save_model(clf, ett_h.generate_dynamic_path([model_folder, label+folder_time+model_name]))
-            label_model_list['mod_url'] = ett_h.generate_dynamic_path([model_folder, label+folder_time+model_name])
+            label_model_list[URLName.MODURL.value] = ett_h.generate_dynamic_path([model_folder, label+folder_time+model_name])
 
             """
             key_name = timestamp+label+model_name
