@@ -41,6 +41,7 @@ class Transformer:
     # Check if the dataframe is empty or not
     @staticmethod
     def lowercase(text):
+
         # pd.DataFrame is an empty dataframe
         if text == pd.DataFrame:
             print("Your text data is empty, please check your input data")
@@ -56,6 +57,7 @@ class Transformer:
     # Check if the dataframe is empty or not
     @staticmethod
     def stemming(text):
+
         try:
             porter_stemmer = PorterStemmer()
             text = text.apply(lambda x: " ".join([porter_stemmer.stem(word) for word in x.split()]))
@@ -71,6 +73,7 @@ class Transformer:
     # Check if the dataframe is empty or not
     @staticmethod
     def stemming_mp(text,cores=4):   
+
        # pd.DataFrame is an empty dataframe
         if text == pd.DataFrame:
             print("Your text data is empty, please check your input data")
@@ -90,6 +93,7 @@ class Transformer:
     # @returns String rooted text
     @staticmethod                                                   
     def lemmatization(text):
+
         text = text.apply(lambda x: " ".join([Word(word).lemmatize() for word in x.split()]))
         return text
     
@@ -97,6 +101,7 @@ class Transformer:
     # Check if the dataframe is empty or not
     @staticmethod
     def lemmatization_mp(text,cores=2):
+
         # pd.DataFrame is an empty dataframe
         if text == pd.DataFrame:
             print("Your text data is empty, please check your input data")
@@ -118,6 +123,7 @@ class Transformer:
     # @see sklearn.transform()
     @staticmethod
     def perform_model_transformation(model, dataFrame): 
+
         try:
             return model.transform(dataFrame)
         except AttributeError:
@@ -134,6 +140,7 @@ class Transformer:
     # So moving the string_to_dataframe and concatinate_data_columns to another file(helper.py)
     @staticmethod
     def transform_data_to_dataframe(job_type, input_data, list_column):   
+
         # SINGLE                                                        
         if job_type == JobType.BATCH.value:                             
             dataframe_single = ett_h.string_to_dataframe(input_data,list_column)
@@ -149,6 +156,7 @@ class Transformer:
     # @returns DataFrame
     @staticmethod
     def transform_data_to_dataframe_basic(input_data, list_column): 
+
         combined_data = ett_h.concatinate_data_columns(list_column, input_data)
         return combined_data
     ##
@@ -158,12 +166,14 @@ class Transformer:
     # @returns Combined dataframe
     @staticmethod
     def combine_dataframe(list_dataframe, axis_num): 
+
         for i in list_dataframe:
              result_model = pd.concat([i for i in list_dataframe],axis = axis_num)
         return result_model
     
     @staticmethod 
     def one_hot_encoding(dataframe):
+
         label_new = []
         for i in dataframe:
             add_space = " "+i
@@ -186,5 +196,6 @@ class Transformer:
     # @returns String type of data
     @staticmethod
     def bytes_to_str(data):
+        
         data = str(data, "utf-8")
         return data
