@@ -97,7 +97,7 @@ class TrainHazardUpload(Resource):
         bytes_data = ett_t.bytes_to_str(bytes_data)
         bytes_data = json.loads(bytes_data) 
         TrainHazardUpload.input_data = pd.DataFrame(bytes_data)
-        return "Successfully uploading hazard data"
+        return "Successfully uploading hazard data."
 
 class TrainHazard(Resource):
     

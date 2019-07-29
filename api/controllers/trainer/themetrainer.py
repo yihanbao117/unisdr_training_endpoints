@@ -97,7 +97,7 @@ class TrainThemeUpload(Resource):
         bytes_data = ett_t.bytes_to_str(bytes_data)
         bytes_data = json.loads(bytes_data) 
         TrainThemeUpload.input_data = pd.DataFrame(bytes_data)
-        return "Successfully uploading Theme data"
+        return "Successfully uploading Theme data."
 
 class TrainTheme(Resource):
     
